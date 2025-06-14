@@ -1,22 +1,20 @@
 <?php
-session_start();
+session_start([
+    'cookie_httponly' => true,
+    'cookie_secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+    'cookie_samesite' => 'Strict'
+]);
 require_once 'includes/db.php';
-
-if (!empty($_SESSION['user_id'])) {
-    $stmt = $pdo->prepare('UPDATE users SET last_active = NOW() WHERE id = ?');
-    $stmt->execute([$_SESSION['user_id']]);
-}
 
 if (empty($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
 }
-
 $user_id = $_SESSION['user_id'];
 $action = $_GET['action'] ?? '';
 $contact_username = trim($_GET['contact'] ?? '');
 
-if (!$contact_username) {
+if (!$contact_username || !preg_match('/^[a-zA-Z0-9_]{3,50}$/', $contact_username)) {
     header('Location: home.php?error=Contact invalide');
     exit;
 }

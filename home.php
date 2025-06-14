@@ -4,15 +4,12 @@ session_start([
     'cookie_secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
     'cookie_samesite' => 'Strict'
 ]);
+require_once 'includes/db.php';
 
-if (!empty($_SESSION['user_id'])) {
-    $stmt = $pdo->prepare('UPDATE users SET last_active = NOW() WHERE id = ?');
-    $stmt->execute([$_SESSION['user_id']]);
-}
-
+header('Strict-Transport-Security: max-age=63072000; includeSubDomains; preload');
 header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
-header('Referrer-Policy: no-referrer');
+header('Content-Security-Policy: default-src \'self\';');
 
 if (empty($_SESSION['user_id']) || empty($_SESSION['username'])) {
     header('Location: login.php');
@@ -20,17 +17,20 @@ if (empty($_SESSION['user_id']) || empty($_SESSION['username'])) {
 }
 $username = htmlspecialchars($_SESSION['username']);
 
-require_once 'includes/db.php';
-
 $user_id = $_SESSION['user_id'];
 $stmt = $pdo->prepare(
-    "SELECT u.id, u.username
+    "SELECT u.id, u.username, u.last_active
      FROM contacts c
      JOIN users u ON c.contact_id = u.id
      WHERE c.user_id = ?"
 );
 $stmt->execute([$user_id]);
 $contacts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+function is_online($last_active) {
+    if (!$last_active) return false;
+    return (strtotime($last_active) > (time() - 120));
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -60,9 +60,9 @@ $contacts = $stmt->fetchAll(PDO::FETCH_ASSOC);
              <li>Aucun contact trouvé.</li>
           <?php endif; ?>
         </ul>
-        <form action="contacts_action.php" method="get" class="add-contact-form">
+        <form action="contacts_action.php" method="get" class="add-contact-form" autocomplete="off">
           <input type="hidden" name="action" value="add">
-          <input type="text" name="contact" placeholder="Ajouter un pseudo" required>
+          <input type="text" name="contact" placeholder="Ajouter un pseudo" required pattern="[a-zA-Z0-9_]{3,50}">
             <button type="submit">Ajouter</button>
         </form>
     </aside>
