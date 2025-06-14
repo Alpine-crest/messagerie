@@ -9,17 +9,14 @@ if (isset($_SESSION['user_id'])) {
 $error = $_GET['error'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Récupérer les données
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
 
-    // Sécurité : vérifie que username n'est pas vide et pas trop court
     if (strlen($username) < 3 || strlen($password) < 4) {
         header('Location: register.php?error=Pseudo ou mot de passe trop court');
         exit;
     }
 
-    // Vérifie si l'utilisateur existe déjà
     $stmt = $pdo->prepare('SELECT id FROM users WHERE username = ?');
     $stmt->execute([$username]);
     if ($stmt->fetch()) {
@@ -27,13 +24,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Hash du mot de passe (très important pour la sécurité)
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-    // Insérer le nouvel utilisateur
-    $stmt = $pdo->prepare('INSERT INTO users (username, password) VALUES (?, ?)');
-    if ($stmt->execute([$username, $hashedPassword])) {
-        // Se connecter automatiquement après inscription
+    // Générer une clé de chiffrement unique (256 bits -> 32 bytes)
+    $encryption_key = base64_encode(random_bytes(32));
+
+    $stmt = $pdo->prepare('INSERT INTO users (username, password, encryption_key) VALUES (?, ?, ?)');
+    if ($stmt->execute([$username, $hashedPassword, $encryption_key])) {
         $_SESSION['user_id'] = $pdo->lastInsertId();
         $_SESSION['username'] = $username;
         header('Location: home.php');
