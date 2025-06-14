@@ -4,8 +4,12 @@ session_start([
     'cookie_secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
     'cookie_samesite' => 'Strict'
 ]);
-
 require_once 'includes/db.php';
+
+header('Strict-Transport-Security: max-age=63072000; includeSubDomains; preload');
+header('X-Frame-Options: DENY');
+header('X-Content-Type-Options: nosniff');
+header('Content-Security-Policy: default-src \'self\'; script-src \'self\'; style-src \'self\';');
 
 if (empty($_SESSION['user_id']) || empty($_SESSION['username'])) {
     header('Location: login.php');
@@ -23,7 +27,8 @@ $stmt = $pdo->prepare(
     "SELECT u.id, u.username, u.last_active
      FROM contacts c
      JOIN users u ON c.contact_id = u.id
-     WHERE c.user_id = ?"
+     WHERE c.user_id = ?
+     ORDER BY u.username ASC"
 );
 $stmt->execute([$user_id]);
 $contacts = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -33,10 +38,12 @@ function is_online($last_active) {
     return (strtotime($last_active) > (time() - 120));
 }
 
-// Récupère le contact sélectionné
 $contact_username = $_GET['user'] ?? '';
+if ($contact_username && !in_array($contact_username, array_column($contacts, 'username'))) {
+    header('Location: chat.php');
+    exit;
+}
 
-// Génère un token CSRF à chaque affichage du formulaire si besoin
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
@@ -72,9 +79,9 @@ $csrf_token = $_SESSION['csrf_token'];
                 <li>Aucun contact trouvé.</li>
             <?php endif; ?>
         </ul>
-        <form action="contacts_action.php" method="get" class="add-contact-form">
+        <form action="contacts_action.php" method="get" class="add-contact-form" autocomplete="off">
             <input type="hidden" name="action" value="add">
-            <input type="text" name="contact" placeholder="Ajouter un pseudo" required>
+            <input type="text" name="contact" placeholder="Ajouter un pseudo" required pattern="[a-zA-Z0-9_]{3,50}">
             <button type="submit">Ajouter</button>
         </form>
     </aside>
@@ -83,13 +90,14 @@ $csrf_token = $_SESSION['csrf_token'];
             <h1>Chat avec <?php echo htmlspecialchars($contact_username ?: "…"); ?></h1>
             <a href="logout.php" class="logout-btn">Déconnexion</a>
         </header>
-        <div id="chat-messages" class="chat-messages"></div>
-        <form id="chat-form" class="chat-form" method="post" action="send_message.php" autocomplete="off">
+        <div id="chat-messages" class="chat-messages" aria-live="polite"></div>
+        <form id="chat-form" class="chat-form" method="post" action="send_message.php" autocomplete="off" novalidate>
             <input type="hidden" name="to" id="chat-to" value="<?php echo htmlspecialchars($contact_username); ?>">
             <input type="hidden" name="csrf_token" id="csrf-token" value="<?php echo htmlspecialchars($csrf_token); ?>">
-            <input type="text" name="message" id="message-input" placeholder="Ecris ton message..." required autocomplete="off">
+            <input type="text" name="message" id="message-input" maxlength="2000" placeholder="Ecris ton message..." required autocomplete="off">
             <button type="submit">Envoyer</button>
         </form>
+        <div id="chat-error" class="error" style="display:none;"></div>
     </section>
 </div>
 <script>

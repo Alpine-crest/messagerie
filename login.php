@@ -10,7 +10,21 @@ if (!empty($_SESSION['user_id'])) {
     $stmt->execute([$_SESSION['user_id']]);
 }
 
+require_once 'includes/security.php'; // à placer tout en haut
 require_once 'includes/db.php';
+
+if (!isset($_SESSION['login_attempts'])) $_SESSION['login_attempts'] = 0;
+if (!isset($_SESSION['last_login_attempt'])) $_SESSION['last_login_attempt'] = time();
+
+if ($_SESSION['login_attempts'] >= 5 && (time() - $_SESSION['last_login_attempt'] < 180)) {
+    die('Trop de tentatives, réessayez dans 3 minutes.');
+}
+// ... (le reste du login)
+// Après chaque tentative ratée :
+$_SESSION['login_attempts']++;
+$_SESSION['last_login_attempt'] = time();
+// Après un succès :
+$_SESSION['login_attempts'] = 0;
 
 // Headers de sécurité
 header('X-Frame-Options: DENY');

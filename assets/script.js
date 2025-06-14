@@ -2,12 +2,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const messagesDiv = document.getElementById('chat-messages');
     const msgInput = document.getElementById('message-input');
     const form = document.getElementById('chat-form');
+    const errorDiv = document.getElementById('chat-error');
     const toInput = document.getElementById('chat-to');
-    const csrfToken = window.APP_CHAT ? window.APP_CHAT.csrfToken : '';
 
-    // Récup info du contact
-    const contact = window.APP_CHAT ? window.APP_CHAT.contact : '';
-    const myUsername = window.APP_CHAT ? window.APP_CHAT.myUsername : '';
+    function getCsrfToken() {
+        return window.APP_CHAT && window.APP_CHAT.csrfToken ? window.APP_CHAT.csrfToken : '';
+    }
 
     function escapeHtml(text) {
         const div = document.createElement('div');
@@ -15,9 +15,26 @@ document.addEventListener('DOMContentLoaded', function() {
         return div.innerHTML;
     }
 
+    function showError(msg) {
+        if (errorDiv) {
+            errorDiv.textContent = msg;
+            errorDiv.style.display = '';
+            setTimeout(() => { errorDiv.style.display = 'none'; }, 4000);
+        } else {
+            alert(msg);
+        }
+    }
+
     function loadMessages() {
-        if (!contact || !messagesDiv) return;
-        fetch('messages_api.php?contact=' + encodeURIComponent(contact))
+        const contact = window.APP_CHAT ? window.APP_CHAT.contact : '';
+        const myUsername = window.APP_CHAT ? window.APP_CHAT.myUsername : '';
+        if (!contact || !messagesDiv) {
+            messagesDiv.innerHTML = "<i>Sélectionnez un contact pour discuter.</i>";
+            return;
+        }
+        fetch('messages_api.php?contact=' + encodeURIComponent(contact), {
+            credentials: "same-origin"
+        })
             .then(r => r.json())
             .then(data => {
                 messagesDiv.innerHTML = "";
@@ -29,31 +46,45 @@ document.addEventListener('DOMContentLoaded', function() {
                         messagesDiv.appendChild(el);
                     });
                     messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                } else if (data.error) {
+                    showError(data.error);
                 }
-            });
+            })
+            .catch(() => { showError("Erreur de connexion ou d'accès aux messages."); });
     }
 
     // Rafraîchissement périodique
     setInterval(loadMessages, 2000);
     loadMessages();
 
-    // Envoi AJAX du message avec CSRF
+    // Envoi AJAX du message avec CSRF dynamique
     if (form) {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
+            errorDiv && (errorDiv.style.display = "none");
             const formData = new FormData(form);
-            // Ajoute le CSRF token si jamais il a changé
-            formData.set('csrf_token', csrfToken);
+            formData.set('csrf_token', getCsrfToken());
             fetch('send_message.php', {
                 method: 'POST',
+                credentials: "same-origin",
                 body: formData
-            }).then(response => {
+            }).then(async response => {
                 if (response.ok) {
+                    let data = {};
+                    try { data = await response.json(); } catch (e) {}
+                    // Nouveau token CSRF pour le prochain envoi
+                    if (data.csrf_token) {
+                        window.APP_CHAT.csrfToken = data.csrf_token;
+                        document.getElementById('csrf-token').value = data.csrf_token;
+                    }
                     msgInput.value = '';
                     loadMessages();
                 } else {
-                    response.text().then(txt => alert("Erreur : " + txt));
+                    let txt = await response.text();
+                    showError(txt || "Erreur lors de l'envoi.");
                 }
+            }).catch(() => {
+                showError("Erreur réseau.");
             });
         });
     }
