@@ -77,3 +77,9 @@ a.btn.small, button.btn.small { padding: 6px 12px; font-size: 0.9em; }
     border: 1px solid #ccc;
     border-radius: 4px;
 }
+
+
+.status.online { color: green; font-size: 0.9em; margin-left: 7px; }
+.status.offline { color: #aaa; font-size: 0.9em; margin-left: 7px; }
+.remove-contact { margin-left: 8px; color: #a00; text-decoration: none; }
+.add-contact-form { margin-top: 1em; }

@@ -1,47 +1,96 @@
 <?php
-session_start();
-require_once 'includes/auth.php';
-require_login();
+session_start([
+    'cookie_httponly' => true,
+    'cookie_secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+    'cookie_samesite' => 'Strict'
+]);
 
-$user = $_SESSION['username'];
-$contact = $_GET['user'] ?? null;
-if (!$contact) {
-    header('Location: home.php');
+if (!empty($_SESSION['user_id'])) {
+    $stmt = $pdo->prepare('UPDATE users SET last_active = NOW() WHERE id = ?');
+    $stmt->execute([$_SESSION['user_id']]);
+}
+
+require_once 'includes/db.php';
+
+if (empty($_SESSION['user_id']) || empty($_SESSION['username'])) {
+    header('Location: login.php');
     exit;
 }
+$user_id = $_SESSION['user_id'];
+$username = htmlspecialchars($_SESSION['username']);
+
+// Met à jour le statut actif
+$stmt = $pdo->prepare('UPDATE users SET last_active = NOW() WHERE id = ?');
+$stmt->execute([$user_id]);
+
+// Récupère contacts + statuts
+$stmt = $pdo->prepare(
+    "SELECT u.id, u.username, u.last_active
+     FROM contacts c
+     JOIN users u ON c.contact_id = u.id
+     WHERE c.user_id = ?"
+);
+$stmt->execute([$user_id]);
+$contacts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+function is_online($last_active) {
+    if (!$last_active) return false;
+    return (strtotime($last_active) > (time() - 120));
+}
+
+// Récupère le contact sélectionné
+$contact_username = $_GET['user'] ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Discussion avec <?php echo htmlspecialchars($contact); ?> - Messagerie</title>
+    <title>Chat - Messagerie</title>
     <link rel="stylesheet" href="assets/style.css">
-    <script src="assets/script.js" defer></script>
 </head>
 <body>
-    <div class="main-layout">
-        <aside class="sidebar">
-            <h2>Contacts</h2>
-            <ul class="contact-list">
-                <!-- À compléter dynamiquement -->
-                <li><a href="chat.php?user=Paul">Paul</a></li>
-                <li><a href="chat.php?user=Marie">Marie</a></li>
-            </ul>
-        </aside>
-        <section class="content">
-            <header>
-                <h1>Discussion avec <?php echo htmlspecialchars($contact); ?></h1>
-                <a href="logout.php" class="logout-btn">Déconnexion</a>
-            </header>
-            <div id="messages" class="messages">
-                <!-- Les messages s’afficheront ici (à compléter avec AJAX/JS) -->
-            </div>
-            <form id="sendForm" action="send_message.php" method="post" class="send-form">
-                <input type="hidden" name="to" value="<?php echo htmlspecialchars($contact); ?>">
-                <input type="text" name="message" id="message" placeholder="Tape ton message…" autocomplete="off" required>
-                <button class="btn" type="submit">Envoyer</button>
-            </form>
-        </section>
-    </div>
+<div class="main-layout">
+    <aside class="sidebar">
+        <h2>Contacts</h2>
+        <ul class="contact-list">
+            <?php if ($contacts): ?>
+                <?php foreach ($contacts as $contact): ?>
+                    <li>
+                        <a href="chat.php?user=<?php echo urlencode($contact['username']); ?>"
+                           <?php if ($contact['username'] === $contact_username) echo 'class="selected"'; ?>>
+                            <?php echo htmlspecialchars($contact['username']); ?>
+                        </a>
+                        <span class="status <?php echo is_online($contact['last_active']) ? 'online' : 'offline'; ?>">
+                            <?php echo is_online($contact['last_active']) ? '● En ligne' : '○ Hors ligne'; ?>
+                        </span>
+                        <a href="contacts_action.php?action=remove&contact=<?php echo urlencode($contact['username']); ?>"
+                           class="remove-contact" onclick="return confirm('Retirer ce contact ?');">🗑️</a>
+                    </li>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <li>Aucun contact trouvé.</li>
+            <?php endif; ?>
+        </ul>
+        <form action="contacts_action.php" method="get" class="add-contact-form">
+            <input type="hidden" name="action" value="add">
+            <input type="text" name="contact" placeholder="Ajouter un pseudo" required>
+            <button type="submit">Ajouter</button>
+        </form>
+    </aside>
+    <section class="content">
+        <header>
+            <h1>Chat avec <?php echo htmlspecialchars($contact_username ?: "…"); ?></h1>
+            <a href="logout.php" class="logout-btn">Déconnexion</a>
+        </header>
+        <div class="chat-messages">
+            <!-- Affichage des messages ici (à compléter) -->
+        </div>
+        <form class="chat-form" method="post" action="send_message.php">
+            <input type="hidden" name="to" value="<?php echo htmlspecialchars($contact_username); ?>">
+            <input type="text" name="message" placeholder="Ecris ton message..." required autocomplete="off">
+            <button type="submit">Envoyer</button>
+        </form>
+    </section>
+</div>
 </body>
 </html>

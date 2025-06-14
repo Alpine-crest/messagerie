@@ -5,6 +5,11 @@ session_start([
     'cookie_samesite' => 'Strict'
 ]);
 
+if (!empty($_SESSION['user_id'])) {
+    $stmt = $pdo->prepare('UPDATE users SET last_active = NOW() WHERE id = ?');
+    $stmt->execute([$_SESSION['user_id']]);
+}
+
 require_once 'includes/db.php';
 
 // Affichage d'une erreur éventuelle

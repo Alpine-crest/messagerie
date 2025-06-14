@@ -5,6 +5,11 @@ session_start([
     'cookie_samesite' => 'Strict'
 ]);
 
+if (!empty($_SESSION['user_id'])) {
+    $stmt = $pdo->prepare('UPDATE users SET last_active = NOW() WHERE id = ?');
+    $stmt->execute([$_SESSION['user_id']]);
+}
+
 header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: no-referrer');
@@ -39,18 +44,27 @@ $contacts = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <aside class="sidebar">
         <h2>Contacts</h2>
         <ul class="contact-list">
-            <?php if ($contacts): ?>
-                <?php foreach ($contacts as $contact): ?>
-                    <li>
+          <?php if ($contacts): ?>
+              <?php foreach ($contacts as $contact): ?>
+                 <li>
                         <a href="chat.php?user=<?php echo urlencode($contact['username']); ?>">
                             <?php echo htmlspecialchars($contact['username']); ?>
                         </a>
-                    </li>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <li>Aucun contact trouvé.</li>
-            <?php endif; ?>
+                        <span class="status <?php echo is_online($contact['last_active']) ? 'online' : 'offline'; ?>">
+                            <?php echo is_online($contact['last_active']) ? '● En ligne' : '○ Hors ligne'; ?>
+                     </span>
+                     <a href="contacts_action.php?action=remove&contact=<?php echo urlencode($contact['username']); ?>" class="remove-contact" onclick="return confirm('Retirer ce contact ?');">🗑️</a>
+                 </li>
+              <?php endforeach; ?>
+          <?php else: ?>
+             <li>Aucun contact trouvé.</li>
+          <?php endif; ?>
         </ul>
+        <form action="contacts_action.php" method="get" class="add-contact-form">
+          <input type="hidden" name="action" value="add">
+          <input type="text" name="contact" placeholder="Ajouter un pseudo" required>
+            <button type="submit">Ajouter</button>
+        </form>
     </aside>
     <section class="content">
         <header>
