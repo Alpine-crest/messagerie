@@ -1,10 +1,51 @@
 <?php
 session_start();
+require_once 'includes/db.php';
+
 if (isset($_SESSION['user_id'])) {
     header('Location: home.php');
     exit;
 }
 $error = $_GET['error'] ?? '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Récupérer les données
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    // Sécurité : vérifie que username n'est pas vide et pas trop court
+    if (strlen($username) < 3 || strlen($password) < 4) {
+        header('Location: register.php?error=Pseudo ou mot de passe trop court');
+        exit;
+    }
+
+    // Vérifie si l'utilisateur existe déjà
+    $stmt = $pdo->prepare('SELECT id FROM users WHERE username = ?');
+    $stmt->execute([$username]);
+    if ($stmt->fetch()) {
+        header('Location: register.php?error=Ce pseudo existe déjà');
+        exit;
+    }
+
+    // Hash du mot de passe (très important pour la sécurité)
+    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+    // Insérer le nouvel utilisateur
+    $stmt = $pdo->prepare('INSERT INTO users (username, password) VALUES (?, ?)');
+    if ($stmt->execute([$username, $hashedPassword])) {
+        // Se connecter automatiquement après inscription
+        $_SESSION['user_id'] = $pdo->lastInsertId();
+        $_SESSION['username'] = $username;
+        header('Location: home.php');
+        exit;
+    } else {
+        header('Location: register.php?error=Erreur lors de l\'inscription');
+        exit;
+    }
+} else {
+    header('Location: register.php');
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
