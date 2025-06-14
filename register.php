@@ -26,8 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-    // Générer une clé de chiffrement unique (256 bits -> 32 bytes)
-    $encryption_key = base64_encode(random_bytes(32));
+    // Générer une clé de chiffrement unique avec OpenSSL (256 bits = 32 octets)
+    $encryption_key = base64_encode(openssl_random_pseudo_bytes(32));
 
     $stmt = $pdo->prepare('INSERT INTO users (username, password, encryption_key) VALUES (?, ?, ?)');
     if ($stmt->execute([$username, $hashedPassword, $encryption_key])) {
