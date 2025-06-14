@@ -5,18 +5,27 @@ session_start([
     'cookie_samesite' => 'Strict'
 ]);
 
-// Headers de sécurité
 header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: no-referrer');
 
-// Redirige si non connecté
 if (empty($_SESSION['user_id']) || empty($_SESSION['username'])) {
     header('Location: login.php');
     exit;
 }
-
 $username = htmlspecialchars($_SESSION['username']);
+
+require_once 'includes/db.php';
+
+$user_id = $_SESSION['user_id'];
+$stmt = $pdo->prepare(
+    "SELECT u.id, u.username
+     FROM contacts c
+     JOIN users u ON c.contact_id = u.id
+     WHERE c.user_id = ?"
+);
+$stmt->execute([$user_id]);
+$contacts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -30,9 +39,17 @@ $username = htmlspecialchars($_SESSION['username']);
     <aside class="sidebar">
         <h2>Contacts</h2>
         <ul class="contact-list">
-            <!-- À intégrer dynamiquement depuis la base -->
-            <li><a href="chat.php?user=Paul">Paul</a></li>
-            <li><a href="chat.php?user=Marie">Marie</a></li>
+            <?php if ($contacts): ?>
+                <?php foreach ($contacts as $contact): ?>
+                    <li>
+                        <a href="chat.php?user=<?php echo urlencode($contact['username']); ?>">
+                            <?php echo htmlspecialchars($contact['username']); ?>
+                        </a>
+                    </li>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <li>Aucun contact trouvé.</li>
+            <?php endif; ?>
         </ul>
     </aside>
     <section class="content">
