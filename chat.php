@@ -35,6 +35,12 @@ function is_online($last_active) {
 
 // Récupère le contact sélectionné
 $contact_username = $_GET['user'] ?? '';
+
+// Génère un token CSRF à chaque affichage du formulaire si besoin
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+$csrf_token = $_SESSION['csrf_token'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -80,6 +86,7 @@ $contact_username = $_GET['user'] ?? '';
         <div id="chat-messages" class="chat-messages"></div>
         <form id="chat-form" class="chat-form" method="post" action="send_message.php" autocomplete="off">
             <input type="hidden" name="to" id="chat-to" value="<?php echo htmlspecialchars($contact_username); ?>">
+            <input type="hidden" name="csrf_token" id="csrf-token" value="<?php echo htmlspecialchars($csrf_token); ?>">
             <input type="text" name="message" id="message-input" placeholder="Ecris ton message..." required autocomplete="off">
             <button type="submit">Envoyer</button>
         </form>
@@ -88,7 +95,8 @@ $contact_username = $_GET['user'] ?? '';
 <script>
 window.APP_CHAT = {
     contact: "<?php echo addslashes($contact_username); ?>",
-    myUsername: "<?php echo addslashes($_SESSION['username']); ?>"
+    myUsername: "<?php echo addslashes($_SESSION['username']); ?>",
+    csrfToken: "<?php echo addslashes($csrf_token); ?>"
 };
 </script>
 <script src="assets/script.js"></script>
