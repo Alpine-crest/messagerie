@@ -16,13 +16,14 @@ CREATE TABLE contacts (
     FOREIGN KEY (contact_id) REFERENCES users(id)
 );
 
--- Table des messages
+-- Table des messages    -- Pour le chiffrement, tu peux aussi stocker iv 
 CREATE TABLE messages (
     id INT AUTO_INCREMENT PRIMARY KEY,
     sender_id INT NOT NULL,
     receiver_id INT NOT NULL,
-    message TEXT NOT NULL,
+    content TEXT NOT NULL,
     sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    iv VARCHAR(32) DEFAULT NULL,
     FOREIGN KEY (sender_id) REFERENCES users(id),
     FOREIGN KEY (receiver_id) REFERENCES users(id)
 );

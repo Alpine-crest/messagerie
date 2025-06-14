@@ -58,27 +58,27 @@ a.btn.small, button.btn.small { padding: 6px 12px; font-size: 0.9em; }
     text-decoration: none;
     margin-top: -8px;
 }
-.messages {
-    background: #f1f7fc;
-    border-radius: 6px;
-    min-height: 180px;
-    padding: 14px 8px;
-    margin-bottom: 16px;
-    max-height: 320px;
+.chat-messages {
+    max-height: 400px;
     overflow-y: auto;
+    background: #fafafa;
+    padding: 1em;
+    margin-bottom: 1em;
+    border: 1px solid #ddd;
 }
-.send-form {
+.msg.self { background: #e0ffe0; padding: 3px 6px; border-radius: 5px; margin: 2px 0; }
+.msg { margin: 2px 0; }
+.date { color: #888; font-size: 0.8em; margin-left: 5px; }
+.send-form, .chat-form {
     display: flex;
     gap: 8px;
 }
-.send-form input[type="text"] {
+.chat-form input[type="text"] {
     flex: 1;
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
 }
-
-
 .status.online { color: green; font-size: 0.9em; margin-left: 7px; }
 .status.offline { color: #aaa; font-size: 0.9em; margin-left: 7px; }
 .remove-contact { margin-left: 8px; color: #a00; text-decoration: none; }

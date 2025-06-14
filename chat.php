@@ -5,11 +5,6 @@ session_start([
     'cookie_samesite' => 'Strict'
 ]);
 
-if (!empty($_SESSION['user_id'])) {
-    $stmt = $pdo->prepare('UPDATE users SET last_active = NOW() WHERE id = ?');
-    $stmt->execute([$_SESSION['user_id']]);
-}
-
 require_once 'includes/db.php';
 
 if (empty($_SESSION['user_id']) || empty($_SESSION['username'])) {
@@ -82,15 +77,20 @@ $contact_username = $_GET['user'] ?? '';
             <h1>Chat avec <?php echo htmlspecialchars($contact_username ?: "…"); ?></h1>
             <a href="logout.php" class="logout-btn">Déconnexion</a>
         </header>
-        <div class="chat-messages">
-            <!-- Affichage des messages ici (à compléter) -->
-        </div>
-        <form class="chat-form" method="post" action="send_message.php">
-            <input type="hidden" name="to" value="<?php echo htmlspecialchars($contact_username); ?>">
-            <input type="text" name="message" placeholder="Ecris ton message..." required autocomplete="off">
+        <div id="chat-messages" class="chat-messages"></div>
+        <form id="chat-form" class="chat-form" method="post" action="send_message.php" autocomplete="off">
+            <input type="hidden" name="to" id="chat-to" value="<?php echo htmlspecialchars($contact_username); ?>">
+            <input type="text" name="message" id="message-input" placeholder="Ecris ton message..." required autocomplete="off">
             <button type="submit">Envoyer</button>
         </form>
     </section>
 </div>
+<script>
+window.APP_CHAT = {
+    contact: "<?php echo addslashes($contact_username); ?>",
+    myUsername: "<?php echo addslashes($_SESSION['username']); ?>"
+};
+</script>
+<script src="assets/script.js"></script>
 </body>
 </html>
