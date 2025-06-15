@@ -1,9 +1,9 @@
 <?php
-header('Content-Type: application/javascript');
+header('Content-Type: application/javascript; charset=UTF-8');
 session_start();
-$contact_username = $_GET['contact'] ?? '';
-$csrf_token = $_SESSION['csrf_token'] ?? '';
-$username = $_SESSION['username'] ?? '';
+$contact_username = isset($_GET['contact']) ? $_GET['contact'] : '';
+$csrf_token = isset($_SESSION['csrf_token']) ? $_SESSION['csrf_token'] : '';
+$username = isset($_SESSION['username']) ? $_SESSION['username'] : '';
 ?>
 window.APP_CHAT = {
     contact: "<?php echo addslashes($contact_username); ?>",

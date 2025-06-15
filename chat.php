@@ -102,10 +102,9 @@ $csrf_token = $_SESSION['csrf_token'];
         <div id="chat-error" class="error hidden"></div>
     </section>
 </div>
-<!-- Initialisation de la config JS dans un fichier séparé -->
-<script src="assets/app-config.js"></script>
+<!-- Initialisation de la config JS dans un fichier séparé : c'est app-config.php, PAS .js ! -->
+<script src="assets/app-config.php?contact=<?php echo urlencode($contact_username); ?>"></script>
 <script src="assets/script.js"></script>
 <script src="assets/remove-contact.js"></script>
-<script src="assets/app-config.js?contact=<?php echo urlencode($contact_username); ?>"></script>
 </body>
 </html>

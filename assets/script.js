@@ -20,8 +20,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function showError(msg) {
         if (errorDiv) {
             errorDiv.textContent = msg;
-            errorDiv.style.display = '';
-            setTimeout(() => { errorDiv.style.display = 'none'; }, 4000);
+            errorDiv.classList.remove('hidden');
+            setTimeout(() => { errorDiv.classList.add('hidden'); }, 4000);
         } else {
             alert(msg);
         }
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (form) {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-            errorDiv && (errorDiv.style.display = "none");
+            errorDiv && errorDiv.classList.add('hidden');
             const formData = new FormData(form);
             formData.set('csrf_token', getCsrfToken());
             fetch('send_message.php', {

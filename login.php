@@ -3,14 +3,15 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-require_once 'includes/db.php';           // Connexion PDO d'abord !
-require_once 'includes/security.php';     // (Optionnel) Mettre ici si dépend de la base
-
+// L'ordre est important : session_start() doit être appelé une seule fois et AVANT tout code qui l'utilise.
 session_start([
     'cookie_httponly' => true,
     'cookie_secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
     'cookie_samesite' => 'Strict'
 ]);
+
+require_once 'includes/db.php';
+require_once 'includes/security.php';
 
 // Headers de sécurité
 header('X-Frame-Options: DENY');
