@@ -9,7 +9,7 @@ require_once 'includes/db.php';
 header('Strict-Transport-Security: max-age=63072000; includeSubDomains; preload');
 header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
-header('Content-Security-Policy: default-src \'self\'; script-src \'self\'; style-src \'self\';');
+header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self';");
 
 if (empty($_SESSION['user_id']) || empty($_SESSION['username'])) {
     header('Location: login.php');
@@ -44,6 +44,7 @@ if ($contact_username && !in_array($contact_username, array_column($contacts, 'u
     exit;
 }
 
+// Génére le token CSRF UNIQUEMENT si non présent (jamais à chaque GET !)
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
@@ -55,6 +56,7 @@ $csrf_token = $_SESSION['csrf_token'];
     <meta charset="UTF-8">
     <title>Chat - Messagerie</title>
     <link rel="stylesheet" href="assets/style.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
 <div class="main-layout">
@@ -72,7 +74,7 @@ $csrf_token = $_SESSION['csrf_token'];
                             <?php echo is_online($contact['last_active']) ? '● En ligne' : '○ Hors ligne'; ?>
                         </span>
                         <a href="contacts_action.php?action=remove&contact=<?php echo urlencode($contact['username']); ?>"
-                           class="remove-contact" onclick="return confirm('Retirer ce contact ?');">🗑️</a>
+                           class="remove-contact" data-contact="<?php echo htmlspecialchars($contact['username']); ?>">🗑️</a>
                     </li>
                 <?php endforeach; ?>
             <?php else: ?>
@@ -97,16 +99,13 @@ $csrf_token = $_SESSION['csrf_token'];
             <input type="text" name="message" id="message-input" maxlength="2000" placeholder="Ecris ton message..." required autocomplete="off">
             <button type="submit">Envoyer</button>
         </form>
-        <div id="chat-error" class="error" style="display:none;"></div>
+        <div id="chat-error" class="error hidden"></div>
     </section>
 </div>
-<script>
-window.APP_CHAT = {
-    contact: "<?php echo addslashes($contact_username); ?>",
-    myUsername: "<?php echo addslashes($_SESSION['username']); ?>",
-    csrfToken: "<?php echo addslashes($csrf_token); ?>"
-};
-</script>
+<!-- Initialisation de la config JS dans un fichier séparé -->
+<script src="assets/app-config.js"></script>
 <script src="assets/script.js"></script>
+<script src="assets/remove-contact.js"></script>
+<script src="assets/app-config.js?contact=<?php echo urlencode($contact_username); ?>"></script>
 </body>
 </html>

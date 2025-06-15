@@ -1,17 +1,21 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+require_once 'includes/db.php';           // Connexion PDO d'abord !
+require_once 'includes/security.php';     // (Optionnel) Mettre ici si dépend de la base
+
 session_start([
     'cookie_httponly' => true,
     'cookie_secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
     'cookie_samesite' => 'Strict'
 ]);
 
-if (!empty($_SESSION['user_id'])) {
-    $stmt = $pdo->prepare('UPDATE users SET last_active = NOW() WHERE id = ?');
-    $stmt->execute([$_SESSION['user_id']]);
-}
-
-require_once 'includes/security.php'; // à placer tout en haut
-require_once 'includes/db.php';
+// Headers de sécurité
+header('X-Frame-Options: DENY');
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: no-referrer');
 
 if (!isset($_SESSION['login_attempts'])) $_SESSION['login_attempts'] = 0;
 if (!isset($_SESSION['last_login_attempt'])) $_SESSION['last_login_attempt'] = time();
@@ -19,20 +23,11 @@ if (!isset($_SESSION['last_login_attempt'])) $_SESSION['last_login_attempt'] = t
 if ($_SESSION['login_attempts'] >= 5 && (time() - $_SESSION['last_login_attempt'] < 180)) {
     die('Trop de tentatives, réessayez dans 3 minutes.');
 }
-// ... (le reste du login)
-// Après chaque tentative ratée :
-$_SESSION['login_attempts']++;
-$_SESSION['last_login_attempt'] = time();
-// Après un succès :
-$_SESSION['login_attempts'] = 0;
 
-// Headers de sécurité
-header('X-Frame-Options: DENY');
-header('X-Content-Type-Options: nosniff');
-header('Referrer-Policy: no-referrer');
-
-// Redirige si déjà connecté
-if (isset($_SESSION['user_id'])) {
+// Met à jour last_active si déjà connecté
+if (!empty($_SESSION['user_id'])) {
+    $stmt = $pdo->prepare('UPDATE users SET last_active = NOW() WHERE id = ?');
+    $stmt->execute([$_SESSION['user_id']]);
     header('Location: home.php');
     exit;
 }
@@ -69,9 +64,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         session_regenerate_id(true);
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
+        $_SESSION['login_attempts'] = 0; // Reset tentative si succès
         header('Location: home.php');
         exit;
     } else {
+        $_SESSION['login_attempts']++;
+        $_SESSION['last_login_attempt'] = time();
         header('Location: login.php?error=Mauvais identifiants');
         exit;
     }
@@ -86,25 +84,44 @@ if (empty($_SESSION['csrf_token'])) {
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Connexion - Messagerie</title>
-    <link rel="stylesheet" href="assets/style.css">
+    <title>Xion – Connexion</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" href="assets/xion-auth.css">
 </head>
 <body>
-<div class="container center small">
-    <h2>Connexion</h2>
-    <?php if ($error): ?>
-        <div class="error"><?php echo htmlspecialchars($error); ?></div>
-    <?php endif; ?>
-    <form action="login.php" method="post" autocomplete="off">
-        <label for="username">Pseudo :</label>
-        <input type="text" name="username" id="username" required>
-        <label for="password">Mot de passe :</label>
-        <input type="password" name="password" id="password" required>
-        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
-        <button class="btn" type="submit">Se connecter</button>
-    </form>
-    <p>Pas encore de compte ? <a href="register.php">Inscription</a></p>
-    <a class="btn small" href="index.php">Retour accueil</a>
+<div class="xion-auth-container">
+    <div class="xion-auth-panel">
+        <h1 class="xion-auth-title">Xion</h1>
+        <h2 class="xion-auth-subtitle">Se connecter</h2>
+        <?php if (isset($error) && $error): ?>
+        <div class="xion-auth-error"><?= htmlspecialchars($error) ?></div>
+        <?php endif; ?>
+        <form method="post" autocomplete="off">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+            <div class="xion-auth-input-group">
+                <span class="xion-auth-icon">
+                    <svg width="22" height="22" fill="none" stroke="#8b949e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="7" r="4"/><path d="M17 19a6 6 0 0 0-12 0"/></svg>
+                </span>
+                <input type="text" name="username" placeholder="Pseudo" autocomplete="username" required>
+            </div>
+            <div class="xion-auth-input-group">
+                <span class="xion-auth-icon">
+                    <svg width="22" height="22" fill="none" stroke="#8b949e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="16" height="9" rx="2"/><path d="M7 10V7a4 4 0 0 1 8 0v3"/></svg>
+                </span>
+                <input type="password" name="password" placeholder="Mot de passe" autocomplete="current-password" required>
+            </div>
+            <button class="xion-auth-btn" type="submit">Se connecter</button>
+        </form>
+        <div class="xion-auth-hint">
+            <span class="xion-auth-icon">
+                <svg width="20" height="20" fill="none" stroke="#8b949e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="14" height="9" rx="2"/><path d="M7 8V6a3 3 0 0 1 6 0v2"/></svg>
+            </span>
+            <span>Trop de tentatives entraînera un verrouillage</span>
+        </div>
+        <div style="margin-top:1.5em;">
+            <a href="register.php" class="xion-nav-link">Créer un compte</a>
+        </div>
+    </div>
 </div>
 </body>
 </html>

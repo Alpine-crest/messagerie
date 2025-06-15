@@ -1,8 +1,8 @@
 <?php
-$host = 'localhost';
+$host = '127.0.0.1';
 $dbname = 'messagerie';
-$user = 'root';
-$pass = ''; // Modifie selon ton installation
+$user = 'marius';
+$pass = 'mon site s appelle xion'; // Modifie selon ton installation
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass);

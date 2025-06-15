@@ -83,3 +83,5 @@ a.btn.small, button.btn.small { padding: 6px 12px; font-size: 0.9em; }
 .status.offline { color: #aaa; font-size: 0.9em; margin-left: 7px; }
 .remove-contact { margin-left: 8px; color: #a00; text-decoration: none; }
 .add-contact-form { margin-top: 1em; }
+
+.hidden { display: none !important; }

@@ -1,0 +1,147 @@
+:root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --accent: #388bfd;
+    --accent-hover: #2563eb;
+    --btn: #21262d;
+    --btn-hover: #30363d;
+    --card-bg: #161b22;
+    --card-border: #30363d;
+    --muted: #8b949e;
+}
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    margin: 0;
+    min-height: 100vh;
+}
+.xion-header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 0.5em 0;
+}
+.xion-header__container {
+    max-width: 1020px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.xion-logo {
+    font-weight: bold;
+    font-size: 1.5em;
+    color: #fff;
+    letter-spacing: 1px;
+}
+.xion-nav-link {
+    color: var(--text);
+    margin-left: 2em;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color .2s;
+}
+.xion-nav-link:hover { color: var(--accent); }
+
+.xion-main {
+    max-width: 1020px;
+    margin: 3em auto 0 auto;
+    padding: 0 1em;
+}
+.xion-hero {
+    text-align: center;
+    margin-bottom: 2em;
+}
+.xion-title {
+    font-size: 2.2em;
+    margin-bottom: 0.3em;
+    font-weight: 600;
+    letter-spacing: -.5px;
+}
+.xion-slogan {
+    color: var(--muted);
+    font-size: 1.2em;
+    margin-bottom: 2em;
+    letter-spacing: .5px;
+}
+.xion-actions {
+    margin: 2em 0 2.5em 0;
+}
+.xion-btn {
+    display: inline-block;
+    padding: 0.85em 2.1em;
+    border-radius: 6px;
+    background: var(--btn);
+    color: var(--text);
+    border: 1px solid var(--border);
+    font-weight: 600;
+    text-decoration: none;
+    margin: 0 0.7em 1em 0;
+    transition: background .2s, color .2s, border-color .2s;
+    cursor: pointer;
+    font-size: 1em;
+}
+.xion-btn--primary {
+    background: var(--accent);
+    border-color: var(--accent-hover);
+    color: #fff;
+}
+.xion-btn--primary:hover, .xion-btn--primary:focus {
+    background: var(--accent-hover);
+    color: #fff;
+}
+.xion-btn:hover, .xion-btn:focus {
+    background: var(--btn-hover);
+    color: var(--accent);
+    border-color: var(--accent-hover);
+}
+.xion-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5em;
+    justify-content: center;
+    margin-bottom: 3em;
+}
+.xion-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 1.5em 2em 1.1em 2em;
+    min-width: 220px;
+    max-width: 320px;
+    flex: 1 1 250px;
+    margin: 0.5em;
+    text-align: center;
+    box-shadow: 0 2px 8px #0002;
+}
+.xion-card-icon {
+    margin-bottom: 0.6em;
+}
+.xion-card h2 { margin-top: 0; color: #fff; font-size: 1.1em; font-weight: 600; }
+.xion-card p { color: var(--muted); font-size: 1em; margin: 0.5em 0 0 0; }
+.xion-footer {
+    text-align: center;
+    color: var(--muted);
+    background: var(--panel);
+    padding: 1.2em 0 0.7em 0;
+    border-top: 1px solid var(--border);
+    margin-top: 4em;
+    font-size: 0.97em;
+    display: flex;
+    gap: 1.7em;
+    justify-content: center;
+}
+.xion-footer-link {
+    color: var(--muted);
+    text-decoration: none;
+    margin: 0 1em;
+    transition: color .2s;
+}
+.xion-footer-link:hover { color: var(--accent); }
+
+@media (max-width: 900px) {
+    .xion-main, .xion-header__container { max-width: 98vw; }
+    .xion-info { flex-direction: column; align-items: center; }
+}

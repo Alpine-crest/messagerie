@@ -33,9 +33,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $username = sanitize($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
+    $password_confirm = $_POST['password_confirm'] ?? '';
 
+    // Validation champs
     if (!preg_match('/^[a-zA-Z0-9_]{3,50}$/', $username) || strlen($password) < 4) {
         header('Location: register.php?error=Pseudo ou mot de passe invalide');
+        exit;
+    }
+    if ($password !== $password_confirm) {
+        header('Location: register.php?error=Les mots de passe ne correspondent pas');
         exit;
     }
 
@@ -82,25 +88,50 @@ if (empty($_SESSION['csrf_token'])) {
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Inscription - Messagerie</title>
-    <link rel="stylesheet" href="assets/style.css">
+    <title>Xion – Inscription</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" href="assets/xion-auth.css">
 </head>
 <body>
-    <div class="container center small">
-        <h2>Inscription</h2>
-        <?php if ($error): ?>
-            <div class="error"><?php echo htmlspecialchars($error); ?></div>
+<div class="xion-auth-container">
+    <div class="xion-auth-panel">
+        <h1 class="xion-auth-title">Xion</h1>
+        <h2 class="xion-auth-subtitle">S’inscrire</h2>
+        <?php if (isset($error) && $error): ?>
+        <div class="xion-auth-error"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
-        <form action="register.php" method="post" autocomplete="off">
-            <label for="username">Choisis un pseudo :</label>
-            <input type="text" name="username" id="username" required pattern="[a-zA-Z0-9_]{3,50}">
-            <label for="password">Mot de passe :</label>
-            <input type="password" name="password" id="password" required minlength="4">
-            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
-            <button class="btn" type="submit">S'inscrire</button>
+        <form method="post" autocomplete="off">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+            <div class="xion-auth-input-group">
+                <span class="xion-auth-icon">
+                    <svg width="22" height="22" fill="none" stroke="#8b949e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="7" r="4"/><path d="M17 19a6 6 0 0 0-12 0"/></svg>
+                </span>
+                <input type="text" name="username" placeholder="Pseudo" autocomplete="username" required>
+            </div>
+            <div class="xion-auth-input-group">
+                <span class="xion-auth-icon">
+                    <svg width="22" height="22" fill="none" stroke="#8b949e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="16" height="9" rx="2"/><path d="M7 10V7a4 4 0 0 1 8 0v3"/></svg>
+                </span>
+                <input type="password" name="password" placeholder="Mot de passe" autocomplete="new-password" required>
+            </div>
+            <div class="xion-auth-input-group">
+                <span class="xion-auth-icon">
+                    <svg width="22" height="22" fill="none" stroke="#8b949e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="16" height="9" rx="2"/><path d="M7 10V7a4 4 0 0 1 8 0v3"/></svg>
+                </span>
+                <input type="password" name="password_confirm" placeholder="Confirmer mot de passe" autocomplete="new-password" required>
+            </div>
+            <button class="xion-auth-btn" type="submit">S’inscrire</button>
         </form>
-        <p>Déjà un compte ? <a href="login.php">Connexion</a></p>
-        <a class="btn small" href="index.php">Retour accueil</a>
+        <div class="xion-auth-hint">
+            <span class="xion-auth-icon">
+                <svg width="20" height="20" fill="none" stroke="#8b949e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="10 2 2 7 2 17 10 22 18 17 18 7 10 2"/><path d="M10 13v-3"/></svg>
+            </span>
+            <span>Une clé de chiffrement sera générée pour protéger votre compte</span>
+        </div>
+        <div style="margin-top:1.5em;">
+            <a href="login.php" class="xion-nav-link">Déjà inscrit ? Connexion</a>
+        </div>
     </div>
+</div>
 </body>
 </html>

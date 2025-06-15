@@ -4,9 +4,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('chat-form');
     const errorDiv = document.getElementById('chat-error');
     const toInput = document.getElementById('chat-to');
+    const csrfInput = document.getElementById('csrf-token');
 
     function getCsrfToken() {
-        return window.APP_CHAT && window.APP_CHAT.csrfToken ? window.APP_CHAT.csrfToken : '';
+        // Toujours lire la valeur du champ caché ! (c'est la source de vérité)
+        return csrfInput ? csrfInput.value : '';
     }
 
     function escapeHtml(text) {
@@ -74,8 +76,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     try { data = await response.json(); } catch (e) {}
                     // Nouveau token CSRF pour le prochain envoi
                     if (data.csrf_token) {
+                        csrfInput.value = data.csrf_token;
                         window.APP_CHAT.csrfToken = data.csrf_token;
-                        document.getElementById('csrf-token').value = data.csrf_token;
                     }
                     msgInput.value = '';
                     loadMessages();
